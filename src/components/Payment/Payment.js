@@ -1,102 +1,115 @@
-import React, {useState} from "react";
-import { useHistory } from 'react-router-dom';
-import makeStyles from "@material-ui/core/styles/makeStyles";
-import styles, {StyledToggleButtonGroup} from "./styles";
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Typography from "@material-ui/core/Typography";
-import CardActions from "@material-ui/core/CardActions";
-import Button from "@material-ui/core/Button";
-import ToggleButton from '@material-ui/lab/ToggleButton';
+import React from 'react'
+import Styles from './Styles'
+import { Form, Field } from 'react-final-form'
+import Card from './Card'
+import {
+  formatCreditCardNumber,
+  formatCVC,
+  formatExpirationDate
+} from './cardUtils'
 import {useDispatch} from "react-redux";
-import {setUserParameters} from "../../reducers/userDataSlice";
+import {setUserPaymentDetails} from "../../reducers/userDataSlice";
+import {useHistory} from "react-router-dom";
 
 
-const useStyles = makeStyles(styles);
-
-const Parameters = () => {
-  const classes = useStyles();
+const Payment = () => {
   const dispatch = useDispatch();
   const history = useHistory();
-  const [alignment, setAlignment] = useState('right');
-  const [duration, setDuration] = useState('12');
-  const [plan, setPlan] = useState('5');
-  const [upfrontPayment, setUpfrontPayment] = useState('no');
 
-  const handleDurationChange = (event, newDuration) => {
-    setDuration(newDuration);
-  };
+  const onSubmit = async values => {
+    dispatch(setUserPaymentDetails({...values}));
+    history.push('/subscription/confirmation');
+  }
 
-  const handlePlanChange = (event, newPlan) => {
-    setPlan(newPlan);
-  };
-
-  const handlePayChange = (event, newPaymentType) => {
-    setUpfrontPayment(newPaymentType);
-  };
-
-  const saveParameters = () => {
-    dispatch(setUserParameters({duration, plan, upfrontPayment}));
-    history.push('/subscription/payment');
+  const goBack = () => {
+    history.push('/subscription/parameters');
   };
 
   return(
-    <Card className={classes.root}>
-      <CardContent>
-        <Typography className={classes.title} color="textSecondary">
-          E Subscription
-        </Typography>
-        <Typography className={classes.subtitle} color="textSecondary">
-          select subscription parameters
-        </Typography>
+    <Styles>
+      <Form
+        onSubmit={onSubmit}
+        render={({
+                   handleSubmit,
+                   form,
+                   submitting,
+                   pristine,
+                   invalid,
+                   values,
+                   active
+                 }) => {
+          return (
+            <form onSubmit={handleSubmit}>
+              <Card
+                number={values.number || ''}
+                name={values.name || ''}
+                expiry={values.expiry || ''}
+                cvc={values.cvc || ''}
+                focused={active}
+              />
+              <div>
+                <Field
+                  name="number"
+                  component="input"
+                  type="text"
+                  pattern="[\d| ]{16,22}"
+                  placeholder="Card Number"
+                  format={formatCreditCardNumber}
+                  validate={val => val ? undefined : 'Required'}
+                />
+              </div>
+              <div>
+                <Field
+                  name="name"
+                  component="input"
+                  type="text"
+                  placeholder="Name"
+                  validate={val => val ? undefined : 'Required'}
+                />
+              </div>
+              <div>
+                <Field
+                  name="expiry"
+                  component="input"
+                  type="text"
+                  pattern="\d\d/\d\d"
+                  placeholder="Valid Thru"
+                  format={formatExpirationDate}
+                  validate={val => val ? undefined : 'Required'}
+                />
+                <Field
+                  name="cvc"
+                  component="input"
+                  type="text"
+                  pattern="\d{3,4}"
+                  placeholder="CVC"
+                  format={formatCVC}
+                  validate={val => val ? undefined : 'Required'}
+                />
+              </div>
+              <div className="buttons">
+                <button type="button" onClick={goBack}>
+                  Back
+                </button>
 
-        <StyledToggleButtonGroup size="large" value={duration} exclusive onChange={handleDurationChange}>
-          <ToggleButton value="3">
-            3
-          </ToggleButton>
-          <ToggleButton value="6">
-            6
-          </ToggleButton>
-          <ToggleButton value="12">
-            12
-          </ToggleButton>
-        </StyledToggleButtonGroup>
+                <button
+                  type="button"
+                  onClick={form.reset}
+                  disabled={submitting || pristine}
+                >
+                  Reset
+                </button>
 
-        <Typography className={classes.subtitle} color="textSecondary">
-          Amount of gigabytes in a cloud
-        </Typography>
+                <button type="submit" disabled={submitting || invalid}>
+                  Next
+                </button>
+              </div>
+            </form>
+          )
+        }}
+      />
+    </Styles>
+  );
+}
 
-        <StyledToggleButtonGroup size="large" value={plan} exclusive onChange={handlePlanChange}>
-          <ToggleButton value="5">
-            5
-          </ToggleButton>
-          <ToggleButton value="10">
-            10
-          </ToggleButton>
-          <ToggleButton value="50">
-            50
-          </ToggleButton>
-        </StyledToggleButtonGroup>
-
-        <Typography className={classes.subtitle} color="textSecondary">
-          Upfront payment
-        </Typography>
-
-        <StyledToggleButtonGroup size="large" value={upfrontPayment} exclusive onChange={handlePayChange}>
-          <ToggleButton value="yes">
-            yes
-          </ToggleButton>
-          <ToggleButton value="no">
-            no
-          </ToggleButton>
-        </StyledToggleButtonGroup>
-      </CardContent>
-
-      <CardActions>
-        <Button size="small" onClick={saveParameters}>Next</Button>
-      </CardActions>
-    </Card>
-  )
-};
-
-export default Parameters;
+export default Payment;

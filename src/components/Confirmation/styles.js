@@ -14,6 +14,16 @@ const styles = ((theme) => ({
   subtitle: {
     fontSize: 12,
     marginBottom: '10px'
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  btn: {
+    margin: '0 auto',
+  },
+  error: {
+    color: 'red',
   }
 }));
 
